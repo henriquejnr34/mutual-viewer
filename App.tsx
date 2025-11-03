@@ -17,8 +17,8 @@ const App: React.FC = () => {
     setAppState('loading');
     setError(null);
     try {
-      // Use the provided API key in the service call to simulate a real API request.
-      const fetchedMutuals = await getMutuals('@naoerapaulo', '7w0mj24wrpM1xaKcatgmoUORA');
+      // The API key is no longer needed here. The call is made to our own secure backend.
+      const fetchedMutuals = await getMutuals();
       if (fetchedMutuals.length === 0) {
         setError("Couldn't find any mutuals for @naoerapaulo. Please try again later.");
         setAppState('error');
@@ -27,7 +27,7 @@ const App: React.FC = () => {
       setMutuals(fetchedMutuals);
       setAppState('slideshow');
     } catch (e) {
-      setError('Failed to fetch mutuals. The X API might be down or the key is invalid.');
+      setError('Failed to fetch mutuals. Our backend might be experiencing issues. Please try again later.');
       setAppState('error');
     }
   }, []);
