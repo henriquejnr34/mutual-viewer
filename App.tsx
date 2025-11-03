@@ -46,14 +46,18 @@ const App: React.FC = () => {
       
       const fetchedMutuals: User[] = await res.json();
       if (fetchedMutuals.length === 0) {
-        setError(`Couldn't find any mutuals for @${user.username}. This can happen if the API is busy or if you have no mutuals.`);
+        setError(`Couldn't find any mutuals for @${user.username}. This can happen if you have no mutuals or if the X API is busy.`);
         setAppState('error');
         return;
       }
       setMutuals(fetchedMutuals);
       setAppState('slideshow');
     } catch (e: any) {
-      setError(e.message || 'An unexpected error occurred. Please try again later.');
+      let errorMessage = e.message || 'An unexpected error occurred. Please try again later.';
+      if (errorMessage.includes('must use keys and tokens from a Twitter developer App that is attached to a Project')) {
+          errorMessage = "It looks like your X Developer App isn't configured correctly.\n\nPlease ensure your App is attached to a Project in the X Developer Portal to get the necessary API access.";
+      }
+      setError(errorMessage);
       setAppState('error');
     }
   }, [user]);
@@ -80,21 +84,38 @@ const App: React.FC = () => {
       case 'slideshow':
         return <Slideshow mutuals={mutuals} onReset={handleReset} />;
       case 'error':
+        const isApiConfigError = error?.includes("attached to a Project");
         return (
-          <div className="text-center">
-            <p className="text-red-400 mb-4">{error}</p>
-            <button
-              onClick={handleTryAgain}
-              className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Try Again
-            </button>
-             <button
-              onClick={handleReset}
-              className="mt-6 text-sm text-gray-500 hover:text-gray-300 transition-colors"
-            >
-              Logout
-            </button>
+          <div className="text-center w-full max-w-lg bg-gray-800 p-8 rounded-lg border border-red-500/50 shadow-2xl">
+            <h2 className="text-2xl font-bold text-red-400 mb-4">Something went wrong</h2>
+            <p className="text-gray-300 mb-6 whitespace-pre-wrap">{error}</p>
+            
+            {isApiConfigError && (
+                 <a
+                    href="https://developer.twitter.com/en/portal/dashboard"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mb-6 group relative inline-flex items-center justify-center px-8 py-3 bg-white text-black font-bold rounded-full overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg hover:shadow-blue-500/50"
+                >
+                    <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                    <span className="relative">Go to X Developer Portal</span>
+                </a>
+            )}
+    
+            <div className="flex items-center justify-center space-x-4">
+                <button
+                  onClick={handleTryAgain}
+                  className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Try Again
+                </button>
+                 <button
+                  onClick={handleReset}
+                  className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  Logout
+                </button>
+            </div>
           </div>
         );
       default:

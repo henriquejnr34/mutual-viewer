@@ -1,3 +1,4 @@
+
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getSessionCookie } from '../lib/session.js';
 import { User } from '../types.js';
@@ -16,7 +17,8 @@ const fetchAllPages = async (url: string, accessToken: string) => {
         if (!response.ok) {
             const errorBody = await response.json();
             console.error("X API Error:", errorBody);
-            throw new Error(`X API request failed with status ${response.status}`);
+            // Pass the detailed message from the API if available
+            throw new Error(errorBody.detail || `X API request failed with status ${response.status}`);
         }
 
         const data = await response.json();
