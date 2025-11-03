@@ -26,10 +26,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   authUrl.searchParams.set('code_challenge', codeChallenge);
   authUrl.searchParams.set('code_challenge_method', 'S256');
 
+  const isProduction = process.env.NODE_ENV === 'production';
+
   // Store state and verifier in cookies
   res.setHeader('Set-Cookie', [
-    serialize(STATE_COOKIE_NAME, state, { httpOnly: true, path: '/', maxAge: 300 }),
-    serialize(CODE_VERIFIER_COOKIE_NAME, codeVerifier, { httpOnly: true, path: '/', maxAge: 300 }),
+    serialize(STATE_COOKIE_NAME, state, {
+      httpOnly: true,
+      path: '/',
+      maxAge: 300, // 5 minutes
+      secure: isProduction,
+      sameSite: 'lax',
+    }),
+    serialize(CODE_VERIFIER_COOKIE_NAME, codeVerifier, {
+      httpOnly: true,
+      path: '/',
+      maxAge: 300, // 5 minutes
+      secure: isProduction,
+      sameSite: 'lax',
+    }),
   ]);
 
   res.redirect(302, authUrl.toString());

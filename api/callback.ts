@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { parse } from 'cookie';
-import { STATE_COOKIE_NAME, CODE_VERIFIER_COOKIE_NAME } from '../lib/constants.js';
-import { setSessionCookie, SessionData } from '../lib/session.js';
+import { parse, serialize } from 'cookie';
+import { STATE_COOKIE_NAME, CODE_VERIFIER_COOKIE_NAME, SESSION_COOKIE_NAME, SESSION_MAX_AGE } from '../lib/constants.js';
+import { SessionData } from '../lib/session.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { X_CLIENT_ID, X_CLIENT_SECRET, APP_URL } = process.env;
@@ -75,7 +75,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     };
     
-    setSessionCookie(res, session);
+    // Create session cookie and clear temporary cookies in one go
+    const sessionCookie = serialize(SESSION_COOKIE_NAME, JSON.stringify(session), {
+      maxAge: SESSION_MAX_AGE,
+      expires: new Date(Date.now() + SESSION_MAX_AGE * 1000),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      sameSite: 'lax',
+    });
+    const clearStateCookie = serialize(STATE_COOKIE_NAME, '', { maxAge: -1, path: '/' });
+    const clearVerifierCookie = serialize(CODE_VERIFIER_COOKIE_NAME, '', { maxAge: -1, path: '/' });
+
+    res.setHeader('Set-Cookie', [sessionCookie, clearStateCookie, clearVerifierCookie]);
     
     // Redirect to the main page
     res.redirect(302, '/');

@@ -1,6 +1,6 @@
 import { serialize, parse } from 'cookie';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { SESSION_COOKIE_NAME } from './constants.js';
+import { SESSION_COOKIE_NAME, SESSION_MAX_AGE } from './constants.js';
 
 export interface SessionData {
   accessToken: string;
@@ -15,12 +15,10 @@ export interface SessionData {
   }
 }
 
-const MAX_AGE = 60 * 60 * 8; // 8 hours
-
 export function setSessionCookie(res: VercelResponse, session: SessionData) {
   const cookie = serialize(SESSION_COOKIE_NAME, JSON.stringify(session), {
-    maxAge: MAX_AGE,
-    expires: new Date(Date.now() + MAX_AGE * 1000),
+    maxAge: SESSION_MAX_AGE,
+    expires: new Date(Date.now() + SESSION_MAX_AGE * 1000),
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     path: '/',
