@@ -6,10 +6,9 @@ import { XIcon } from './icons/XIcon';
 interface DashboardProps {
   user: AuthenticatedUser;
   onFindMutuals: () => void;
-  onLogout: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, onFindMutuals, onLogout }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, onFindMutuals }) => {
   return (
     <div className="text-center flex flex-col items-center w-full">
       <div className="flex items-center space-x-4 mb-8">
@@ -32,12 +31,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onFindMutuals, onLogout }) 
             Find My Mutuals
         </span>
       </button>
-      <button
-        onClick={onLogout}
+      <a
+        href="/api/logout"
         className="mt-6 text-sm text-gray-500 hover:text-gray-300 transition-colors"
       >
         Connect a different account
-      </button>
+      </a>
     </div>
   );
 };

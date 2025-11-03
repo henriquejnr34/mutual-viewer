@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../types';
 import { PlayIcon } from './icons/PlayIcon';
 import { PauseIcon } from './icons/PauseIcon';
-import { XIcon } from './icons/XIcon';
 
 interface SlideshowProps {
   mutuals: User[];
@@ -48,7 +47,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
         {mutuals.map((user, index) => (
           <img
             key={user.id}
-            src={user.profileImageUrl}
+            src={user.profileImageUrl.replace('_normal', '_400x400')}
             alt={user.name}
             className={`absolute top-0 left-0 w-full h-full rounded-2xl object-cover transition-opacity duration-500 ease-in-out ${
               index === currentIndex && !isFading ? 'opacity-100' : 'opacity-0'

@@ -1,99 +1,104 @@
 
-import React, { useState, useCallback } from 'react';
+import React, 'react';
 import { User, AuthenticatedUser } from './types';
-import { getMutuals } from './services/xService';
 import Landing from './components/Landing';
 import Slideshow from './components/Slideshow';
 import LoadingSpinner from './components/LoadingSpinner';
 import Dashboard from './components/Dashboard';
 
-type AuthState = 'loggedOut' | 'loggingIn' | 'loggedIn';
-type SlideshowState = 'idle' | 'loading' | 'slideshow' | 'error';
+type AppState = 'initialLoading' | 'loggedOut' | 'loggedIn' | 'fetchingMutuals' | 'slideshow' | 'error';
 
 const App: React.FC = () => {
-  const [authState, setAuthState] = useState<AuthState>('loggedOut');
-  const [slideshowState, setSlideshowState] = useState<SlideshowState>('idle');
-  const [user, setUser] = useState<AuthenticatedUser | null>(null);
-  const [mutuals, setMutuals] = useState<User[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [appState, setAppState] = React.useState<AppState>('initialLoading');
+  const [user, setUser] = React.useState<AuthenticatedUser | null>(null);
+  const [mutuals, setMutuals] = React.useState<User[]>([]);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const handleLogin = useCallback(() => {
-    setAuthState('loggingIn');
-    // In a real app, this would redirect to the X authentication page.
-    // Here, we simulate the callback after a successful login.
-    setTimeout(() => {
-      setUser({
-        id: 'mockuser123',
-        name: 'Alex Doe',
-        username: 'alex_the_dev',
-        profileImageUrl: 'https://i.pravatar.cc/512?u=mockuser123',
-      });
-      setAuthState('loggedIn');
-    }, 1500);
+  // Check login status on initial load
+  React.useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const res = await fetch('/api/me');
+        if (res.ok) {
+          const userData: AuthenticatedUser = await res.json();
+          setUser(userData);
+          setAppState('loggedIn');
+        } else {
+          setAppState('loggedOut');
+        }
+      } catch (e) {
+        setAppState('loggedOut');
+      }
+    };
+    checkUser();
   }, []);
 
-  const handleLogout = () => {
-    setAuthState('loggedOut');
-    setSlideshowState('idle');
-    setUser(null);
-    setMutuals([]);
-    setError(null);
-  };
-
-  const handleFindMutuals = useCallback(async () => {
+  const handleFindMutuals = React.useCallback(async () => {
     if (!user) return;
-    setSlideshowState('loading');
+    setAppState('fetchingMutuals');
     setError(null);
     try {
-      const fetchedMutuals = await getMutuals();
+      const res = await fetch('/api/mutuals');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to fetch mutuals.');
+      }
+      
+      const fetchedMutuals: User[] = await res.json();
       if (fetchedMutuals.length === 0) {
-        setError(`Couldn't find any mutuals for @${user.username}. Please try again later.`);
-        setSlideshowState('error');
+        setError(`Couldn't find any mutuals for @${user.username}. This can happen if the API is busy or if you have no mutuals.`);
+        setAppState('error');
         return;
       }
       setMutuals(fetchedMutuals);
-      setSlideshowState('slideshow');
-    } catch (e) {
-      setError('Failed to fetch mutuals. Our backend might be experiencing issues. Please try again later.');
-      setSlideshowState('error');
+      setAppState('slideshow');
+    } catch (e: any) {
+      setError(e.message || 'An unexpected error occurred. Please try again later.');
+      setAppState('error');
     }
   }, [user]);
 
   const handleTryAgain = () => {
-    setSlideshowState('idle');
+    setAppState('loggedIn');
     setError(null);
+  };
+  
+  const handleReset = () => {
+     window.location.href = '/api/logout';
   };
 
   const renderContent = () => {
-    switch (authState) {
-      case 'loggingIn':
-        return <LoadingSpinner text="Connecting your X account..." />;
-      case 'loggedIn':
-        if (!user) return null; // Should not happen
-        switch (slideshowState) {
-          case 'loading':
-            return <LoadingSpinner text={`Finding mutuals for @${user.username}...`} />;
-          case 'slideshow':
-            return <Slideshow mutuals={mutuals} onReset={handleLogout} />;
-          case 'error':
-            return (
-              <div className="text-center">
-                <p className="text-red-400 mb-4">{error}</p>
-                <button
-                  onClick={handleTryAgain}
-                  className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Try Again
-                </button>
-              </div>
-            );
-          case 'idle':
-          default:
-            return <Dashboard user={user} onFindMutuals={handleFindMutuals} onLogout={handleLogout} />;
-        }
+    switch (appState) {
+      case 'initialLoading':
+        return <LoadingSpinner text="Checking session..." />;
       case 'loggedOut':
+        return <Landing />;
+      case 'loggedIn':
+        return user ? <Dashboard user={user} onFindMutuals={handleFindMutuals} /> : <LoadingSpinner />;
+      case 'fetchingMutuals':
+         return <LoadingSpinner text={`Finding mutuals for @${user?.username}...`} />;
+      case 'slideshow':
+        return <Slideshow mutuals={mutuals} onReset={handleReset} />;
+      case 'error':
+        return (
+          <div className="text-center">
+            <p className="text-red-400 mb-4">{error}</p>
+            <button
+              onClick={handleTryAgain}
+              className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+            </button>
+             <button
+              onClick={handleReset}
+              className="mt-6 text-sm text-gray-500 hover:text-gray-300 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        );
       default:
-        return <Landing onLogin={handleLogin} />;
+        return <Landing />;
     }
   };
 
