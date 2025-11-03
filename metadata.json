@@ -1,0 +1,5 @@
+{
+  "name": "X Mutuals Slideshow",
+  "description": "A web application to find your mutual followers on X (formerly Twitter) and view their profile pictures in a dynamic slideshow. You can pause the slideshow to try and identify your friends.",
+  "requestFramePermissions": []
+}
