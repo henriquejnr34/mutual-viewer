@@ -1,6 +1,5 @@
-
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSessionCookie } from '../lib/session';
+import { getSessionCookie } from '../lib/session.js';
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
   const session = getSessionCookie(req);

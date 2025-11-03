@@ -1,8 +1,7 @@
-
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { parse } from 'cookie';
-import { STATE_COOKIE_NAME, CODE_VERIFIER_COOKIE_NAME } from '../lib/constants';
-import { setSessionCookie, SessionData } from '../lib/session';
+import { STATE_COOKIE_NAME, CODE_VERIFIER_COOKIE_NAME } from '../lib/constants.js';
+import { setSessionCookie, SessionData } from '../lib/session.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { X_CLIENT_ID, X_CLIENT_SECRET, APP_URL } = process.env;

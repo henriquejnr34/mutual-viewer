@@ -1,8 +1,7 @@
-
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { serialize } from 'cookie';
-import { generateCodeVerifier, generateCodeChallenge } from '../lib/pkce';
-import { X_OAUTH_SCOPES, STATE_COOKIE_NAME, CODE_VERIFIER_COOKIE_NAME } from '../lib/constants';
+import { generateCodeVerifier, generateCodeChallenge } from '../lib/pkce.js';
+import { X_OAUTH_SCOPES, STATE_COOKIE_NAME, CODE_VERIFIER_COOKIE_NAME } from '../lib/constants.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { X_CLIENT_ID, APP_URL } = process.env;
@@ -13,7 +12,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const state = Math.random().toString(36).substring(7);
   const codeVerifier = generateCodeVerifier();
-  const codeChallenge = await generateCodeChallenge(codeVerifier);
+  const codeChallenge = generateCodeChallenge(codeVerifier);
   
   const redirectUri = `${APP_URL}/api/callback`;
   const scope = X_OAUTH_SCOPES.join(' ');

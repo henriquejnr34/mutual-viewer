@@ -1,7 +1,6 @@
-
 import { serialize, parse } from 'cookie';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { SESSION_COOKIE_NAME } from './constants';
+import { SESSION_COOKIE_NAME } from './constants.js';
 
 export interface SessionData {
   accessToken: string;

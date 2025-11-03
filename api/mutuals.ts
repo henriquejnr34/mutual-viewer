@@ -1,7 +1,6 @@
-
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSessionCookie } from '../lib/session';
-import { User } from '../types';
+import { getSessionCookie } from '../lib/session.js';
+import { User } from '../types.js';
 
 // Helper function to fetch paginated results from the X API
 const fetchAllPages = async (url: string, accessToken: string) => {
