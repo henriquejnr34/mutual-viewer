@@ -77,7 +77,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
         onClick={onReset}
         className="mt-12 text-gray-400 hover:text-white transition-colors"
       >
-        Start Over
+        Logout & Start Over
       </button>
     </div>
   );
