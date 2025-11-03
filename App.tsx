@@ -1,5 +1,5 @@
 
-import React, 'react';
+import React from 'react';
 import { User, AuthenticatedUser } from './types';
 import Landing from './components/Landing';
 import Slideshow from './components/Slideshow';
