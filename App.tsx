@@ -8,11 +8,18 @@ import Dashboard from './components/Dashboard';
 
 type AppState = 'initialLoading' | 'loggedOut' | 'loggedIn' | 'fetchingMutuals' | 'slideshow' | 'error';
 
+interface DiagnosisResult {
+  status: 'OK' | 'CONFIG_ERROR' | 'ENV_VAR_MISSING' | 'ERROR';
+  message: string;
+}
+
 const App: React.FC = () => {
   const [appState, setAppState] = React.useState<AppState>('initialLoading');
   const [user, setUser] = React.useState<AuthenticatedUser | null>(null);
   const [mutuals, setMutuals] = React.useState<User[]>([]);
   const [error, setError] = React.useState<string | null>(null);
+  const [isDiagnosing, setIsDiagnosing] = React.useState(false);
+  const [diagnosis, setDiagnosis] = React.useState<DiagnosisResult | null>(null);
 
   // Check login status on initial load
   React.useEffect(() => {
@@ -37,6 +44,7 @@ const App: React.FC = () => {
     if (!user) return;
     setAppState('fetchingMutuals');
     setError(null);
+    setDiagnosis(null);
     try {
       const res = await fetch('/api/mutuals');
       if (!res.ok) {
@@ -61,6 +69,24 @@ const App: React.FC = () => {
       setAppState('error');
     }
   }, [user]);
+  
+  const handleDiagnose = async () => {
+    setIsDiagnosing(true);
+    setDiagnosis(null);
+    try {
+        const res = await fetch('/api/diagnose');
+        const data: DiagnosisResult = await res.json();
+        setDiagnosis(data);
+    } catch (e) {
+        setDiagnosis({
+            status: 'ERROR',
+            message: 'Failed to run diagnosis. Check the browser console and server logs.'
+        });
+    } finally {
+        setIsDiagnosing(false);
+    }
+  };
+
 
   const handleTryAgain = () => {
     setAppState('loggedIn');
@@ -86,44 +112,110 @@ const App: React.FC = () => {
       case 'error':
         const isApiConfigError = error?.includes("attached to a Project");
         return (
-          <div className="text-center w-full max-w-lg bg-gray-800 p-8 rounded-lg border border-red-500/50 shadow-2xl">
-            <h2 className="text-2xl font-bold text-red-400 mb-4">Something went wrong</h2>
-            <p className="text-gray-300 mb-6 whitespace-pre-wrap">{error}</p>
-            
+          <div className="text-center w-full max-w-2xl bg-gray-800 p-8 rounded-lg border border-red-500/50 shadow-2xl">
             {isApiConfigError ? (
-              <div className="flex flex-col items-center space-y-4">
-                 <p className="text-sm text-gray-400 max-w-md">This usually happens after updating your App's permissions. Your previous login session might be using old credentials.</p>
-                 <a
-                    href="https://developer.twitter.com/en/portal/dashboard"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full text-center px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                    1. Go to X Developer Portal (to verify keys)
-                </a>
-                 <button
-                    onClick={handleLogout}
-                    className="w-full group relative inline-flex items-center justify-center px-8 py-3 bg-white text-black font-bold rounded-full overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg hover:shadow-blue-500/50"
-                >
-                    <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                    <span className="relative">2. I've Updated My Keys - Re-Authenticate</span>
-                </button>
+              <div className="flex flex-col text-left space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-red-400 mb-2">Action Required: X App Configuration Error</h2>
+                  <p className="text-gray-400">
+                    The X API is reporting that this application is not correctly configured (`Client Forbidden`). This usually means the API keys being used on the server are from an app that is not linked to a Project, or the environment variables are incorrect.
+                  </p>
+                </div>
+                
+                <div className="bg-gray-900/50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-white mb-2">Step 1: Diagnose Server Configuration</h3>
+                    <p className="text-sm text-gray-400 mb-4">Click this button to test the API keys currently configured on the server. This will help you confirm if your environment variables are set correctly.</p>
+                    <button
+                        onClick={handleDiagnose}
+                        disabled={isDiagnosing}
+                        className="w-full text-center px-6 py-2 bg-yellow-600 text-black font-semibold rounded-lg hover:bg-yellow-500 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
+                    >
+                        {isDiagnosing ? 'Diagnosing...' : 'Verify Server Configuration'}
+                    </button>
+                    {diagnosis && (
+                        <div className={`mt-4 p-3 rounded-md text-sm ${
+                            diagnosis.status === 'CONFIG_ERROR' || diagnosis.status === 'ENV_VAR_MISSING' ? 'bg-red-900/50 text-red-300' :
+                            diagnosis.status === 'OK' ? 'bg-green-900/50 text-green-300' : 'bg-gray-700 text-gray-300'
+                        }`}>
+                            <p className="font-bold mb-1">
+                                {
+                                    diagnosis.status === 'CONFIG_ERROR' ? 'Verification Failed: Configuration Error' :
+                                    diagnosis.status === 'ENV_VAR_MISSING' ? 'Verification Failed: Missing Keys' :
+                                    diagnosis.status === 'OK' ? 'Verification Success' : 'Diagnosis Result'
+                                }
+                            </p>
+                            <p>{diagnosis.message}</p>
+                        </div>
+                    )}
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-white">Step 2: Follow These Instructions to Fix</h3>
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-700 text-white font-bold rounded-full">1</div>
+                    <div>
+                      <h3 className="font-semibold text-white">Get Your OAuth 2.0 Keys</h3>
+                      <p className="text-sm text-gray-400">
+                        This app uses <strong className="text-white">OAuth 2.0</strong>. In the X Developer Portal, go to your Project's App, then to the "Keys and tokens" page. You must use the <strong className="text-white">"Client ID"</strong> and <strong className="text-white">"Client Secret"</strong>.
+                      </p>
+                      <p className="text-sm text-yellow-400 mt-2 p-2 bg-yellow-900/30 rounded-md">
+                        <span className="font-bold">Important:</span> Do <span className="underline">not</span> use the "API Key" and "API Key Secret", as those are for the older OAuth 1.0a protocol.
+                      </p>
+                       <a
+                          href="https://developer.twitter.com/en/portal/dashboard"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-block text-sm text-blue-400 hover:text-blue-300"
+                      >
+                          Open X Developer Portal &rarr;
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-700 text-white font-bold rounded-full">2</div>
+                    <div>
+                      <h3 className="font-semibold text-white">Update & Redeploy</h3>
+                      <p className="text-sm text-gray-400">
+                        Copy the <strong className="text-white">Client ID</strong> into the `X_CLIENT_ID` environment variable and the <strong className="text-white">Client Secret</strong> into `X_CLIENT_SECRET`. You must then **redeploy** your application to apply the changes.
+                      </p>
+                    </div>
+                  </div>
+
+                   <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-700 text-white font-bold rounded-full">3</div>
+                    <div className="w-full">
+                      <h3 className="font-semibold text-white">Re-Authenticate</h3>
+                      <p className="text-sm text-gray-400 mb-4">After redeploying with the correct keys, log out to clear your old session and connect again.</p>
+                      <button
+                          onClick={handleLogout}
+                          className="w-full text-center px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                          Logout and Connect Again
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : (
-              <div className="flex items-center justify-center space-x-4">
-                  <button
-                    onClick={handleTryAgain}
-                    className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Try Again
-                  </button>
-                   <button
-                    onClick={handleLogout}
-                    className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
-                  >
-                    Logout
-                  </button>
-              </div>
+               <>
+                <h2 className="text-2xl font-bold text-red-400 mb-4">Something went wrong</h2>
+                <p className="text-gray-300 mb-6 whitespace-pre-wrap">{error}</p>
+                <div className="flex items-center justify-center space-x-4">
+                    <button
+                      onClick={handleTryAgain}
+                      className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Try Again
+                    </button>
+                     <button
+                      onClick={handleLogout}
+                      className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+                    >
+                      Logout
+                    </button>
+                </div>
+              </>
             )}
           </div>
         );
