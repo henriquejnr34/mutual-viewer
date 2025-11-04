@@ -9,6 +9,8 @@ interface SlideshowProps {
   onReset: () => void;
 }
 
+const MAX_INTERACTIONS = 5;
+
 const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
@@ -62,6 +64,10 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
     if (direction === 'next') {
         if (currentIndex === localMutuals.length - 1) {
             if (hasMore) {
+                if (localMutuals.length >= MAX_INTERACTIONS) {
+                    setHasMore(false);
+                    return;
+                }
                 fetchNextMutual();
             }
             return;
@@ -153,7 +159,12 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
       <div className="h-10 mt-4 text-center">
         {error && <p className="text-red-400 text-sm">{error}</p>}
         {!hasMore && isAtEnd && (
-            <p className="text-gray-400 animate-pulse">Você viu tudo por hoje! Interaja mais e volte depois. 🎉</p>
+             <p className="text-gray-400 animate-pulse">
+                {localMutuals.length >= MAX_INTERACTIONS
+                    ? "Por hoje é só! Que tal recomeçar a brincadeira?"
+                    : "Você viu tudo por hoje! Interaja mais e volte depois. 🎉"
+                }
+            </p>
         )}
       </div>
       
