@@ -52,7 +52,7 @@ const findNextInteraction = async (
     
     const userFields = 'user.fields=profile_image_url';
     const expansions = 'expansions=author_id';
-    const maxResults = 'max_results=3'; // Fetch a small batch to find one new person
+    const maxResults = 'max_results=5'; // Fetch a small batch (min 5) to find one new person
 
     const url = `https://api.twitter.com/2/users/${userId}/${endpoint}?${maxResults}&${expansions}&${userFields}`;
     
