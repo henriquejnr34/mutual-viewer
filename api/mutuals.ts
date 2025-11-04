@@ -100,18 +100,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const likedTweetsUrl = `https://api.twitter.com/2/users/${userId}/liked_tweets?${maxResults}&${expansions}&${userFields}`;
         const mentionsUrl = `https://api.twitter.com/2/users/${userId}/mentions?${maxResults}&${expansions}&${userFields}`;
 
-        const [likedTweetsRes, mentionsRes] = await Promise.all([
-            fetch(likedTweetsUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } }),
-            fetch(mentionsUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } })
-        ]);
-
-        if (!likedTweetsRes.ok || !mentionsRes.ok) {
-             const errorBody = !likedTweetsRes.ok ? await likedTweetsRes.json() : await mentionsRes.json();
-             console.error("X API Error:", errorBody);
-             throw new Error(errorBody.detail || `X API request failed.`);
+        // Fetch liked tweets sequentially to avoid rate limiting
+        const likedTweetsRes = await fetch(likedTweetsUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+        if (!likedTweetsRes.ok) {
+            const errorBody = await likedTweetsRes.json();
+            console.error("X API Error (Liked Tweets):", errorBody);
+            throw new Error(errorBody.detail || `X API request failed for liked tweets.`);
         }
-
         const likedTweetsData: TweetsApiResponse = await likedTweetsRes.json();
+        
+        // Then, fetch mentions sequentially
+        const mentionsRes = await fetch(mentionsUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+        if (!mentionsRes.ok) {
+            const errorBody = await mentionsRes.json();
+            console.error("X API Error (Mentions):", errorBody);
+            throw new Error(errorBody.detail || `X API request failed for mentions.`);
+        }
         const mentionsData: TweetsApiResponse = await mentionsRes.json();
         
         const interactionScores = new Map<string, InteractionInfo>();
