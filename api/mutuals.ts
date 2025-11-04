@@ -86,7 +86,7 @@ const processInteractions = (
 
 async function getSapecaAnalysis(ai: GoogleGenAI, loggedInUser: string, targetUser: string, tweets: string[]): Promise<string> {
     const tweetContext = tweets.map(t => `- "${t.replace(/\n/g, ' ')}"`).join('\n');
-    const prompt = `Você é um cupido digital com um senso de humor picante e divertido. O usuário @${loggedInUser} interagiu com @${targetUser}. Baseado nos seguintes tweets, que são uma mistura de curtidas e menções, escreva uma frase curta, engraçada e levemente atrevida (máximo 25 palavras) explicando por que a 'vibe' deles combina e por que 'com mutual é mais gostoso'. Mantenha o bom humor e use um emoji divertido (como 😉, 😏, ou 🔥). Importante: use a palavra em inglês 'mutual', não a traduza. Não use aspas na resposta. Tweets de contexto:\n${tweetContext}`;
+    const prompt = `Você é um cupido digital com um senso de humor picante e divertido. O usuário @${loggedInUser} foi mencionado por @${targetUser}. Baseado nas seguintes menções, escreva uma frase curta, engraçada e levemente atrevida (máximo 25 palavras) explicando por que a 'vibe' deles combina e por que 'com mutual é mais gostoso'. Mantenha o bom humor e use um emoji divertido (como 😉, 😏, ou 🔥). Importante: use a palavra em inglês 'mutual', não a traduza. Não use aspas na resposta. Tweets de contexto:\n${tweetContext}`;
 
     try {
         const response = await ai.models.generateContent({
@@ -116,19 +116,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         const userFields = 'user.fields=profile_image_url';
         const expansions = 'expansions=author_id';
-        const maxLikes = 'max_results=2';
-        const maxMentions = 'max_results=3';
+        const maxMentions = 'max_results=5';
 
-        const likedTweetsUrl = `https://api.twitter.com/2/users/${userId}/liked_tweets?${maxLikes}&${expansions}&${userFields}`;
         const mentionsUrl = `https://api.twitter.com/2/users/${userId}/mentions?${maxMentions}&${expansions}&${userFields}`;
-
-        const likedTweetsRes = await fetch(likedTweetsUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } });
-        if (!likedTweetsRes.ok) {
-            const errorBody = await likedTweetsRes.json();
-            console.error("X API Error (Liked Tweets):", errorBody);
-            throw new Error(errorBody.detail || `X API request failed for liked tweets.`);
-        }
-        const likedTweetsData: TweetsApiResponse = await likedTweetsRes.json();
         
         const mentionsRes = await fetch(mentionsUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } });
         if (!mentionsRes.ok) {
@@ -140,8 +130,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         const interactionScores = new Map<string, InteractionInfo>();
         
-        processInteractions(likedTweetsData, interactionScores, 1, userId);
-        processInteractions(mentionsData, interactionScores, 2, userId);
+        processInteractions(mentionsData, interactionScores, 1, userId);
 
         const topInteractions = Array.from(interactionScores.values())
             .sort((a, b) => b.score - a.score)
