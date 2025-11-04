@@ -54,7 +54,7 @@ const App: React.FC = () => {
       
       const fetchedInteractions: User[] = await res.json();
       if (fetchedInteractions.length === 0) {
-        setError(`Couldn't find any recent interactions for @${user.username}. Try liking some tweets or interacting with other users!`);
+        setError(`Não encontramos nenhuma interação recente para @${user.username}. Curta uns tweets ou interaja com a galera e tente de novo!`);
         setAppState('error');
         return;
       }
@@ -100,13 +100,13 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (appState) {
       case 'initialLoading':
-        return <LoadingSpinner text="Checking session..." />;
+        return <LoadingSpinner text="Verificando a sessão..." />;
       case 'loggedOut':
         return <Landing />;
       case 'loggedIn':
         return user ? <Dashboard user={user} onFindInteractions={handleFindInteractions} /> : <LoadingSpinner />;
       case 'fetchingInteractions':
-         return <LoadingSpinner text={`Analyzing interactions for @${user?.username}...`} />;
+         return <LoadingSpinner text={`Analisando suas interações e gerando conexões sapecas...`} />;
       case 'slideshow':
         return <Slideshow mutuals={mutuals} onReset={handleLogout} />;
       case 'error':
@@ -116,21 +116,21 @@ const App: React.FC = () => {
             {isApiConfigError ? (
               <div className="flex flex-col text-left space-y-6">
                  <div>
-                  <h2 className="text-2xl font-bold text-red-400 mb-2">Action Required: Your X App Must Be in a Project</h2>
+                  <h2 className="text-2xl font-bold text-red-400 mb-2">Ação Necessária: Sua App do X Precisa Estar em um Projeto</h2>
                   <p className="text-gray-400">
-                    The error <code className="text-sm bg-gray-900/70 text-red-300 px-1 py-0.5 rounded">Client Forbidden</code> means your app lacks the required v2 API access. This is because the app is not correctly associated with a <strong>Project</strong> in the X Developer Portal. <strong className="text-white">Standalone Apps will not work.</strong>
+                    O erro <code className="text-sm bg-gray-900/70 text-red-300 px-1 py-0.5 rounded">Client Forbidden</code> significa que sua app não tem o acesso necessário à API v2. Isso acontece porque a app não está corretamente associada a um <strong>Projeto</strong> no Portal de Desenvolvedor do X. <strong className="text-white">Apps "Standalone" não funcionarão.</strong>
                   </p>
                 </div>
 
                 <div className="space-y-5">
-                  <h3 className="font-semibold text-white text-lg">How to Fix This</h3>
+                  <h3 className="font-semibold text-white text-lg">Como Corrigir</h3>
 
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-700 text-white font-bold rounded-full">1</div>
                     <div>
-                      <h4 className="font-semibold text-white">Verify App Setup in the X Developer Portal</h4>
+                      <h4 className="font-semibold text-white">Verifique a Configuração no Portal de Desenvolvedor</h4>
                       <p className="text-sm text-gray-400">
-                        Go to your dashboard. Your App <strong className="text-white">must</strong> be listed under a "Project". If it's under "Standalone Apps", that is the source of the error. You must create a new App <strong className="text-white">inside</strong> a Project to get v2 API access.
+                        Vá para o seu dashboard. Sua App <strong className="text-white">precisa</strong> estar listada dentro de um "Projeto". Se estiver em "Standalone Apps", essa é a causa do erro. Você precisa criar uma nova App <strong className="text-white">dentro</strong> de um Projeto para obter acesso à API v2.
                       </p>
                        <a
                           href="https://developer.twitter.com/en/portal/dashboard"
@@ -138,7 +138,7 @@ const App: React.FC = () => {
                           rel="noopener noreferrer"
                           className="mt-2 inline-block text-sm text-blue-400 hover:text-blue-300"
                       >
-                          Open X Developer Portal &rarr;
+                          Abrir Portal de Desenvolvedor &rarr;
                       </a>
                     </div>
                   </div>
@@ -146,12 +146,12 @@ const App: React.FC = () => {
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-700 text-white font-bold rounded-full">2</div>
                     <div>
-                      <h4 className="font-semibold text-white">Get the Correct OAuth 2.0 Keys</h4>
+                      <h4 className="font-semibold text-white">Obtenha as Chaves OAuth 2.0 Corretas</h4>
                       <p className="text-sm text-gray-400">
-                        Click on your App <strong className="text-white">that is inside a Project</strong>. Go to its "Keys and tokens" tab, and copy the <strong className="text-white">Client ID</strong> and <strong className="text-white">Client Secret</strong>.
+                        Clique na sua App <strong className="text-white">que está dentro de um Projeto</strong>. Vá para a aba "Keys and tokens" e copie o <strong className="text-white">Client ID</strong> e o <strong className="text-white">Client Secret</strong>.
                       </p>
                       <p className="text-sm text-yellow-400 mt-2 p-2 bg-yellow-900/30 rounded-md">
-                        <span className="font-bold">Important:</span> The "API Key" and "API Key Secret" are for OAuth 1.0a and <span className="underline">will not work</span> for this application.
+                        <span className="font-bold">Importante:</span> "API Key" e "API Key Secret" são para OAuth 1.0a e <span className="underline">não funcionarão</span> para esta aplicação.
                       </p>
                     </div>
                   </div>
@@ -159,9 +159,9 @@ const App: React.FC = () => {
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-700 text-white font-bold rounded-full">3</div>
                     <div>
-                      <h4 className="font-semibold text-white">Update Environment Variables & Redeploy</h4>
+                      <h4 className="font-semibold text-white">Atualize as Variáveis de Ambiente e Reimplante</h4>
                       <p className="text-sm text-gray-400">
-                        Update <code className="text-sm bg-gray-900/70 text-gray-300 px-1 py-0.5 rounded">X_CLIENT_ID</code> and <code className="text-sm bg-gray-900/70 text-gray-300 px-1 py-0.5 rounded">X_CLIENT_SECRET</code> with the new values. You must **redeploy** your application to apply these changes.
+                        Atualize <code className="text-sm bg-gray-900/70 text-gray-300 px-1 py-0.5 rounded">X_CLIENT_ID</code> e <code className="text-sm bg-gray-900/70 text-gray-300 px-1 py-0.5 rounded">X_CLIENT_SECRET</code> com os novos valores. Você precisa **reimplantar** sua aplicação para que as mudanças tenham efeito.
                       </p>
                     </div>
                   </div>
@@ -169,9 +169,9 @@ const App: React.FC = () => {
                    <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-700 text-white font-bold rounded-full">4</div>
                     <div className="w-full">
-                      <h4 className="font-semibold text-white">Verify and Re-authenticate</h4>
+                      <h4 className="font-semibold text-white">Verifique e Reautentique</h4>
                        <p className="text-sm text-gray-400 mb-4">
-                        After redeploying, use this button to verify the new server configuration. If it succeeds, you can log out and connect again.
+                        Após reimplantar, use este botão para verificar a nova configuração do servidor. Se for bem-sucedido, você pode deslogar e conectar novamente.
                       </p>
                       <div className="bg-gray-900/50 p-4 rounded-lg">
                           <button
@@ -179,7 +179,7 @@ const App: React.FC = () => {
                               disabled={isDiagnosing}
                               className="w-full text-center px-6 py-2 bg-yellow-600 text-black font-semibold rounded-lg hover:bg-yellow-500 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
                           >
-                              {isDiagnosing ? 'Diagnosing...' : 'Verify Server Configuration'}
+                              {isDiagnosing ? 'Diagnosticando...' : 'Verificar Configuração do Servidor'}
                           </button>
                           {diagnosis && (
                               <div className={`mt-4 p-3 rounded-md text-sm ${
@@ -188,9 +188,9 @@ const App: React.FC = () => {
                               }`}>
                                   <p className="font-bold mb-1">
                                       {
-                                          diagnosis.status === 'CONFIG_ERROR' ? 'Verification Failed: Configuration Error' :
-                                          diagnosis.status === 'ENV_VAR_MISSING' ? 'Verification Failed: Missing Keys' :
-                                          diagnosis.status === 'OK' ? 'Verification Success' : 'Diagnosis Result'
+                                          diagnosis.status === 'CONFIG_ERROR' ? 'Verificação Falhou: Erro de Configuração' :
+                                          diagnosis.status === 'ENV_VAR_MISSING' ? 'Verificação Falhou: Chaves Faltando' :
+                                          diagnosis.status === 'OK' ? 'Verificação com Sucesso' : 'Resultado do Diagnóstico'
                                       }
                                   </p>
                                   <p>{diagnosis.message}</p>
@@ -201,7 +201,7 @@ const App: React.FC = () => {
                           onClick={handleLogout}
                           className="mt-4 w-full text-center px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
                       >
-                          Logout and Connect Again
+                          Deslogar e Conectar Novamente
                       </button>
                     </div>
                   </div>
@@ -209,14 +209,14 @@ const App: React.FC = () => {
               </div>
             ) : (
                <>
-                <h2 className="text-2xl font-bold text-red-400 mb-4">Something went wrong</h2>
+                <h2 className="text-2xl font-bold text-red-400 mb-4">Ops, algo deu errado</h2>
                 <p className="text-gray-300 mb-6 whitespace-pre-wrap">{error}</p>
                 <div className="flex items-center justify-center space-x-4">
                     <button
                       onClick={handleTryAgain}
                       className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                      Try Again
+                      Tentar Novamente
                     </button>
                      <button
                       onClick={handleLogout}

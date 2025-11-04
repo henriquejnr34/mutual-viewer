@@ -19,7 +19,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onFindInteractions }) => {
         </div>
       </div>
       <p className="text-lg text-gray-400 max-w-md mb-8">
-        You're connected! Let's analyze your recent likes and mentions to create a slideshow of your top interactions.
+        Você está conectado! Vamos analisar suas curtidas e menções recentes para revelar suas conexões mais... quentes.
       </p>
       <button
         onClick={onFindInteractions}
@@ -28,14 +28,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onFindInteractions }) => {
         <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
         <span className="relative flex items-center">
             <XIcon className="w-5 h-5 mr-2 text-black" />
-            Analyze My Interactions
+            Analisar Minhas Conexões
         </span>
       </button>
       <a
         href="/api/logout"
         className="mt-6 text-sm text-gray-500 hover:text-gray-300 transition-colors"
       >
-        Connect a different account
+        Conectar outra conta
       </a>
     </div>
   );

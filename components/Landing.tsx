@@ -9,10 +9,10 @@ const Landing: React.FC = () => {
         <XIcon className="w-12 h-12 text-white" />
       </div>
       <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">
-        Interaction Slideshow
+        Com Mutual é Mais Gostoso
       </h1>
       <p className="text-lg text-gray-400 max-w-md mb-8">
-        Connect your X account to see who you interact with most. We'll create a slideshow from your recent likes and mentions.
+        Conecte sua conta do X e deixe nossa IA sapeca analisar com quem você mais interage... e por que essa conexão pode ser deliciosa.
       </p>
       <a
         href="/api/login"
@@ -21,7 +21,7 @@ const Landing: React.FC = () => {
         <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
         <span className="relative flex items-center">
             <XIcon className="w-5 h-5 mr-2 text-black" />
-            Connect with X
+            Descobrir Conexões
         </span>
       </a>
     </div>

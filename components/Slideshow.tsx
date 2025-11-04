@@ -9,7 +9,7 @@ interface SlideshowProps {
   onReset: () => void;
 }
 
-const SLIDESHOW_SPEED_MS = 2000;
+const SLIDESHOW_SPEED_MS = 3500; // Increased speed to allow time to read analysis
 
 const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -26,7 +26,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
         setTimeout(() => {
           setCurrentIndex((prevIndex) => (prevIndex + 1) % mutuals.length);
           setIsFading(false);
-        }, 500);
+        }, 500); // Fade duration
       }, SLIDESHOW_SPEED_MS);
     } else {
       if (intervalRef.current) {
@@ -57,9 +57,15 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
         <div className="absolute inset-0 bg-black bg-opacity-30 rounded-2xl pointer-events-none"></div>
       </div>
 
-      <div className={`text-center transition-opacity duration-500 ${isFading ? 'opacity-0' : 'opacity-100'}`}>
+      <div className={`text-center transition-opacity duration-500 w-full max-w-md ${isFading ? 'opacity-0' : 'opacity-100'}`}>
         <h2 className="text-3xl font-bold">{currentUser.name}</h2>
-        <p className="text-gray-400 text-lg">@{currentUser.username}</p>
+        <p className="text-gray-400 text-lg mb-4">@{currentUser.username}</p>
+        
+        {currentUser.analysis && (
+           <blockquote className="mt-2 p-3 bg-gray-800/50 border-l-4 border-purple-400 text-gray-300 italic rounded-r-lg">
+             "{currentUser.analysis}"
+           </blockquote>
+        )}
       </div>
 
       <div className="flex items-center space-x-4 mt-8">
@@ -76,7 +82,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
         onClick={onReset}
         className="mt-12 text-gray-400 hover:text-white transition-colors"
       >
-        Logout & Start Over
+        Logout & Começar de Novo
       </button>
     </div>
   );
