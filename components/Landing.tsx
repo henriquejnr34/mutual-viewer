@@ -9,10 +9,10 @@ const Landing: React.FC = () => {
         <XIcon className="w-12 h-12 text-white" />
       </div>
       <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">
-        Mutuals Slideshow
+        Interaction Slideshow
       </h1>
       <p className="text-lg text-gray-400 max-w-md mb-8">
-        Connect your X account to see your mutual follows in a fun, interactive way. Get ready to spot your friends!
+        Connect your X account to see who you interact with most. We'll create a slideshow from your recent likes and mentions.
       </p>
       <a
         href="/api/login"

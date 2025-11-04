@@ -6,7 +6,7 @@ import Slideshow from './components/Slideshow';
 import LoadingSpinner from './components/LoadingSpinner';
 import Dashboard from './components/Dashboard';
 
-type AppState = 'initialLoading' | 'loggedOut' | 'loggedIn' | 'fetchingMutuals' | 'slideshow' | 'error';
+type AppState = 'initialLoading' | 'loggedOut' | 'loggedIn' | 'fetchingInteractions' | 'slideshow' | 'error';
 
 interface DiagnosisResult {
   status: 'OK' | 'CONFIG_ERROR' | 'ENV_VAR_MISSING' | 'ERROR';
@@ -40,25 +40,25 @@ const App: React.FC = () => {
     checkUser();
   }, []);
 
-  const handleFindMutuals = React.useCallback(async () => {
+  const handleFindInteractions = React.useCallback(async () => {
     if (!user) return;
-    setAppState('fetchingMutuals');
+    setAppState('fetchingInteractions');
     setError(null);
     setDiagnosis(null);
     try {
       const res = await fetch('/api/mutuals');
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to fetch mutuals.');
+        throw new Error(errorData.error || 'Failed to fetch interactions.');
       }
       
-      const fetchedMutuals: User[] = await res.json();
-      if (fetchedMutuals.length === 0) {
-        setError(`Couldn't find any mutuals for @${user.username}. This can happen if you have no mutuals or if the X API is busy.`);
+      const fetchedInteractions: User[] = await res.json();
+      if (fetchedInteractions.length === 0) {
+        setError(`Couldn't find any recent interactions for @${user.username}. Try liking some tweets or interacting with other users!`);
         setAppState('error');
         return;
       }
-      setMutuals(fetchedMutuals);
+      setMutuals(fetchedInteractions);
       setAppState('slideshow');
     } catch (e: any) {
       let errorMessage = e.message || 'An unexpected error occurred. Please try again later.';
@@ -104,9 +104,9 @@ const App: React.FC = () => {
       case 'loggedOut':
         return <Landing />;
       case 'loggedIn':
-        return user ? <Dashboard user={user} onFindMutuals={handleFindMutuals} /> : <LoadingSpinner />;
-      case 'fetchingMutuals':
-         return <LoadingSpinner text={`Finding mutuals for @${user?.username}...`} />;
+        return user ? <Dashboard user={user} onFindInteractions={handleFindInteractions} /> : <LoadingSpinner />;
+      case 'fetchingInteractions':
+         return <LoadingSpinner text={`Analyzing interactions for @${user?.username}...`} />;
       case 'slideshow':
         return <Slideshow mutuals={mutuals} onReset={handleLogout} />;
       case 'error':
