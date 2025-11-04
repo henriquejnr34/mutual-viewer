@@ -29,7 +29,7 @@ type TweetsApiResponse = {
 };
 
 async function getSapecaAnalysis(ai: GoogleGenAI, loggedInUser: string, targetUser: string, tweet: string): Promise<string> {
-    const prompt = `Você é um cupido digital com um senso de humor picante e divertido. O usuário @${loggedInUser} interagiu com @${targetUser}. Baseado no seguinte tweet, escreva uma frase curta, engraçada e levemente atrevida (máximo 25 palavras) explicando por que a 'vibe' deles combina e por que 'com mutual é mais gostoso'. Mantenha o bom humor e use um emoji divertido (como 😉, 😏, ou 🔥). Não use aspas na resposta. Tweet de contexto:\n- "${tweet.replace(/\n/g, ' ')}"`;
+    const prompt = `Você é um cupido digital com um senso de humor picante e divertido. O usuário @${loggedInUser} interagiu com @${targetUser}. Baseado no seguinte tweet, escreva uma frase curta, engraçada e levemente atrevida (máximo 25 palavras) explicando por que a 'vibe' deles combina e por que 'com mutual é mais gostoso'. Mantenha o bom humor e use um emoji divertido (como 😉, 😏, ou 🔥). Importante: use a palavra em inglês 'mutual', não a traduza. Não use aspas na resposta. Tweet de contexto:\n- "${tweet.replace(/\n/g, ' ')}"`;
 
     try {
         const response = await ai.models.generateContent({
@@ -52,7 +52,7 @@ const findNextInteraction = async (
     
     const userFields = 'user.fields=profile_image_url';
     const expansions = 'expansions=author_id';
-    const maxResults = 'max_results=5'; // Fetch a small batch (min 5) to find one new person
+    const maxResults = 'max_results=25'; // Fetch a larger batch to increase chances of finding a new person
 
     const url = `https://api.twitter.com/2/users/${userId}/${endpoint}?${maxResults}&${expansions}&${userFields}`;
     

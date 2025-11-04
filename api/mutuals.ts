@@ -1,5 +1,6 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { GoogleGenAI } from '@google/genai';
 import { getSessionCookie } from '../lib/session.js';
 
 type Tweet = {
@@ -83,6 +84,22 @@ const processInteractions = (
     }
 };
 
+async function getSapecaAnalysis(ai: GoogleGenAI, loggedInUser: string, targetUser: string, tweets: string[]): Promise<string> {
+    const tweetContext = tweets.map(t => `- "${t.replace(/\n/g, ' ')}"`).join('\n');
+    const prompt = `Você é um cupido digital com um senso de humor picante e divertido. O usuário @${loggedInUser} interagiu com @${targetUser}. Baseado nos seguintes tweets, que são uma mistura de curtidas e menções, escreva uma frase curta, engraçada e levemente atrevida (máximo 25 palavras) explicando por que a 'vibe' deles combina e por que 'com mutual é mais gostoso'. Mantenha o bom humor e use um emoji divertido (como 😉, 😏, ou 🔥). Importante: use a palavra em inglês 'mutual', não a traduza. Não use aspas na resposta. Tweets de contexto:\n${tweetContext}`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+        return response.text.trim();
+    } catch (e) {
+        console.error(`Gemini API error for ${targetUser}:`, e);
+        return "Essa conexão é tão quente que até a IA ficou sem palavras. 🔥"; // Fallback response
+    }
+}
+
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const session = getSessionCookie(req);
@@ -90,7 +107,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
     
-    const { accessToken, user: { id: userId } } = session;
+    if (!process.env.GEMINI_API_KEY) {
+        return res.status(500).json({ error: 'A chave da API do Google (GEMINI_API_KEY) não está configurada no servidor.' });
+    }
+
+    const { accessToken, user: { id: userId, username: loggedInUsername } } = session;
 
     try {
         const userFields = 'user.fields=profile_image_url';
@@ -100,7 +121,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const likedTweetsUrl = `https://api.twitter.com/2/users/${userId}/liked_tweets?${maxResults}&${expansions}&${userFields}`;
         const mentionsUrl = `https://api.twitter.com/2/users/${userId}/mentions?${maxResults}&${expansions}&${userFields}`;
 
-        // Fetch liked tweets sequentially to avoid rate limiting
         const likedTweetsRes = await fetch(likedTweetsUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } });
         if (!likedTweetsRes.ok) {
             const errorBody = await likedTweetsRes.json();
@@ -109,7 +129,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         const likedTweetsData: TweetsApiResponse = await likedTweetsRes.json();
         
-        // Then, fetch mentions sequentially
         const mentionsRes = await fetch(mentionsUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } });
         if (!mentionsRes.ok) {
             const errorBody = await mentionsRes.json();
@@ -123,16 +142,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         processInteractions(likedTweetsData, interactionScores, 1, userId);
         processInteractions(mentionsData, interactionScores, 2, userId);
 
-        const sortedInteractions = Array.from(interactionScores.values())
+        const topInteractions = Array.from(interactionScores.values())
             .sort((a, b) => b.score - a.score)
-            .slice(0, 15)
-            .map(({ score, tweets, ...rest }) => ({
-                ...rest,
-                // Shuffle and take a random sample of up to 10 tweets
-                tweets: shuffleArray(tweets).slice(0, 10),
-            }));
+            .slice(0, 5);
 
-        res.status(200).json(sortedInteractions);
+        if (topInteractions.length === 0) {
+            return res.status(200).json([]);
+        }
+
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+        const analyzedInteractionsPromises = topInteractions.map(async (interaction) => {
+            const analysis = await getSapecaAnalysis(
+                ai,
+                loggedInUsername,
+                interaction.username,
+                shuffleArray(interaction.tweets).slice(0, 10)
+            );
+            const { score, tweets, ...rest } = interaction;
+            return {
+                ...rest,
+                analysis,
+            };
+        });
+
+        const analyzedInteractions = await Promise.all(analyzedInteractionsPromises);
+
+        res.status(200).json(analyzedInteractions);
 
     } catch (error: any) {
         console.error('Failed to fetch interactions:', error);
