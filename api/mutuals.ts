@@ -116,10 +116,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         const userFields = 'user.fields=profile_image_url';
         const expansions = 'expansions=author_id';
-        const maxResults = 'max_results=50';
+        const maxLikes = 'max_results=2';
+        const maxMentions = 'max_results=3';
 
-        const likedTweetsUrl = `https://api.twitter.com/2/users/${userId}/liked_tweets?${maxResults}&${expansions}&${userFields}`;
-        const mentionsUrl = `https://api.twitter.com/2/users/${userId}/mentions?${maxResults}&${expansions}&${userFields}`;
+        const likedTweetsUrl = `https://api.twitter.com/2/users/${userId}/liked_tweets?${maxLikes}&${expansions}&${userFields}`;
+        const mentionsUrl = `https://api.twitter.com/2/users/${userId}/mentions?${maxMentions}&${expansions}&${userFields}`;
 
         const likedTweetsRes = await fetch(likedTweetsUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } });
         if (!likedTweetsRes.ok) {
