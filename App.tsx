@@ -115,51 +115,22 @@ const App: React.FC = () => {
           <div className="text-center w-full max-w-2xl bg-gray-800 p-8 rounded-lg border border-red-500/50 shadow-2xl">
             {isApiConfigError ? (
               <div className="flex flex-col text-left space-y-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-red-400 mb-2">Action Required: X App Configuration Error</h2>
+                 <div>
+                  <h2 className="text-2xl font-bold text-red-400 mb-2">Action Required: Your X App Must Be in a Project</h2>
                   <p className="text-gray-400">
-                    The X API is reporting that this application is not correctly configured (`Client Forbidden`). This usually means the API keys being used on the server are from an app that is not linked to a Project, or the environment variables are incorrect.
+                    The error <code className="text-sm bg-gray-900/70 text-red-300 px-1 py-0.5 rounded">Client Forbidden</code> means your app lacks the required v2 API access. This is because the app is not correctly associated with a <strong>Project</strong> in the X Developer Portal. <strong className="text-white">Standalone Apps will not work.</strong>
                   </p>
                 </div>
-                
-                <div className="bg-gray-900/50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-white mb-2">Step 1: Diagnose Server Configuration</h3>
-                    <p className="text-sm text-gray-400 mb-4">Click this button to test the API keys currently configured on the server. This will help you confirm if your environment variables are set correctly.</p>
-                    <button
-                        onClick={handleDiagnose}
-                        disabled={isDiagnosing}
-                        className="w-full text-center px-6 py-2 bg-yellow-600 text-black font-semibold rounded-lg hover:bg-yellow-500 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
-                    >
-                        {isDiagnosing ? 'Diagnosing...' : 'Verify Server Configuration'}
-                    </button>
-                    {diagnosis && (
-                        <div className={`mt-4 p-3 rounded-md text-sm ${
-                            diagnosis.status === 'CONFIG_ERROR' || diagnosis.status === 'ENV_VAR_MISSING' ? 'bg-red-900/50 text-red-300' :
-                            diagnosis.status === 'OK' ? 'bg-green-900/50 text-green-300' : 'bg-gray-700 text-gray-300'
-                        }`}>
-                            <p className="font-bold mb-1">
-                                {
-                                    diagnosis.status === 'CONFIG_ERROR' ? 'Verification Failed: Configuration Error' :
-                                    diagnosis.status === 'ENV_VAR_MISSING' ? 'Verification Failed: Missing Keys' :
-                                    diagnosis.status === 'OK' ? 'Verification Success' : 'Diagnosis Result'
-                                }
-                            </p>
-                            <p>{diagnosis.message}</p>
-                        </div>
-                    )}
-                </div>
 
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-white">Step 2: Follow These Instructions to Fix</h3>
+                <div className="space-y-5">
+                  <h3 className="font-semibold text-white text-lg">How to Fix This</h3>
+
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-700 text-white font-bold rounded-full">1</div>
                     <div>
-                      <h3 className="font-semibold text-white">Get Your OAuth 2.0 Keys</h3>
+                      <h4 className="font-semibold text-white">Verify App Setup in the X Developer Portal</h4>
                       <p className="text-sm text-gray-400">
-                        This app uses <strong className="text-white">OAuth 2.0</strong>. In the X Developer Portal, go to your Project's App, then to the "Keys and tokens" page. You must use the <strong className="text-white">"Client ID"</strong> and <strong className="text-white">"Client Secret"</strong>.
-                      </p>
-                      <p className="text-sm text-yellow-400 mt-2 p-2 bg-yellow-900/30 rounded-md">
-                        <span className="font-bold">Important:</span> Do <span className="underline">not</span> use the "API Key" and "API Key Secret", as those are for the older OAuth 1.0a protocol.
+                        Go to your dashboard. Your App <strong className="text-white">must</strong> be listed under a "Project". If it's under "Standalone Apps", that is the source of the error. You must create a new App <strong className="text-white">inside</strong> a Project to get v2 API access.
                       </p>
                        <a
                           href="https://developer.twitter.com/en/portal/dashboard"
@@ -175,21 +146,60 @@ const App: React.FC = () => {
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-700 text-white font-bold rounded-full">2</div>
                     <div>
-                      <h3 className="font-semibold text-white">Update & Redeploy</h3>
+                      <h4 className="font-semibold text-white">Get the Correct OAuth 2.0 Keys</h4>
                       <p className="text-sm text-gray-400">
-                        Copy the <strong className="text-white">Client ID</strong> into the `X_CLIENT_ID` environment variable and the <strong className="text-white">Client Secret</strong> into `X_CLIENT_SECRET`. You must then **redeploy** your application to apply the changes.
+                        Click on your App <strong className="text-white">that is inside a Project</strong>. Go to its "Keys and tokens" tab, and copy the <strong className="text-white">Client ID</strong> and <strong className="text-white">Client Secret</strong>.
+                      </p>
+                      <p className="text-sm text-yellow-400 mt-2 p-2 bg-yellow-900/30 rounded-md">
+                        <span className="font-bold">Important:</span> The "API Key" and "API Key Secret" are for OAuth 1.0a and <span className="underline">will not work</span> for this application.
                       </p>
                     </div>
                   </div>
 
-                   <div className="flex items-start space-x-4">
+                  <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-700 text-white font-bold rounded-full">3</div>
+                    <div>
+                      <h4 className="font-semibold text-white">Update Environment Variables & Redeploy</h4>
+                      <p className="text-sm text-gray-400">
+                        Update <code className="text-sm bg-gray-900/70 text-gray-300 px-1 py-0.5 rounded">X_CLIENT_ID</code> and <code className="text-sm bg-gray-900/70 text-gray-300 px-1 py-0.5 rounded">X_CLIENT_SECRET</code> with the new values. You must **redeploy** your application to apply these changes.
+                      </p>
+                    </div>
+                  </div>
+                  
+                   <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-700 text-white font-bold rounded-full">4</div>
                     <div className="w-full">
-                      <h3 className="font-semibold text-white">Re-Authenticate</h3>
-                      <p className="text-sm text-gray-400 mb-4">After redeploying with the correct keys, log out to clear your old session and connect again.</p>
+                      <h4 className="font-semibold text-white">Verify and Re-authenticate</h4>
+                       <p className="text-sm text-gray-400 mb-4">
+                        After redeploying, use this button to verify the new server configuration. If it succeeds, you can log out and connect again.
+                      </p>
+                      <div className="bg-gray-900/50 p-4 rounded-lg">
+                          <button
+                              onClick={handleDiagnose}
+                              disabled={isDiagnosing}
+                              className="w-full text-center px-6 py-2 bg-yellow-600 text-black font-semibold rounded-lg hover:bg-yellow-500 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
+                          >
+                              {isDiagnosing ? 'Diagnosing...' : 'Verify Server Configuration'}
+                          </button>
+                          {diagnosis && (
+                              <div className={`mt-4 p-3 rounded-md text-sm ${
+                                  diagnosis.status === 'CONFIG_ERROR' || diagnosis.status === 'ENV_VAR_MISSING' ? 'bg-red-900/50 text-red-300' :
+                                  diagnosis.status === 'OK' ? 'bg-green-900/50 text-green-300' : 'bg-gray-700 text-gray-300'
+                              }`}>
+                                  <p className="font-bold mb-1">
+                                      {
+                                          diagnosis.status === 'CONFIG_ERROR' ? 'Verification Failed: Configuration Error' :
+                                          diagnosis.status === 'ENV_VAR_MISSING' ? 'Verification Failed: Missing Keys' :
+                                          diagnosis.status === 'OK' ? 'Verification Success' : 'Diagnosis Result'
+                                      }
+                                  </p>
+                                  <p>{diagnosis.message}</p>
+                              </div>
+                          )}
+                      </div>
                       <button
                           onClick={handleLogout}
-                          className="w-full text-center px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                          className="mt-4 w-full text-center px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
                       >
                           Logout and Connect Again
                       </button>

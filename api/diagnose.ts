@@ -29,7 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             if (errorBody.reason === 'client-not-enrolled') {
                 return res.status(200).json({
                     status: 'CONFIG_ERROR',
-                    message: "The API keys configured on the server are for an app that is not properly set up in a Project. Please ensure you have regenerated the 'API Key and Secret' from within your Project on the X Developer Portal, updated the environment variables, and redeployed your application."
+                    message: "Verification Failed: App Not in Project. The provided Client ID belongs to an app that is not associated with a Project in the X Developer Portal. Access to the v2 API is only granted to apps within a Project. Please follow the instructions on the main page to fix this."
                 });
             }
              // Handle other potential auth errors
@@ -44,7 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         await response.json();
         return res.status(200).json({
             status: 'OK',
-            message: "Verification Success: The server's API keys are valid and can authenticate with X. If you still see an error, the issue may be related to the specific permissions required for reading user data. Ensure your app has the necessary scopes authorized."
+            message: "Verification Success: The server's Client ID and Secret are valid and can authenticate with X. If you still see an error when finding mutuals, the issue is likely related to the app's user-based permissions or scopes."
         });
 
 
