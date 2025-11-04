@@ -1,9 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { ArrowLeftIcon } from './icons/ArrowLeftIcon';
 import { ArrowRightIcon } from './icons/ArrowRightIcon';
-
 
 interface SlideshowProps {
   mutuals: User[];
@@ -13,25 +12,72 @@ interface SlideshowProps {
 const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
+  const [localMutuals, setLocalMutuals] = useState<User[]>(mutuals);
+  const [isThrottled, setIsThrottled] = useState(false);
+
+  // Fetch analysis on demand
+  useEffect(() => {
+    const fetchAnalysis = async (index: number) => {
+      if (index < 0 || index >= localMutuals.length) return;
+
+      const user = localMutuals[index];
+      // Only fetch if analysis doesn't exist
+      if (!user.analysis) {
+        try {
+          const res = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              targetUsername: user.username,
+              tweets: user.tweets,
+            }),
+          });
+          if (res.ok) {
+            const { analysis } = await res.json();
+            setLocalMutuals(prev =>
+              prev.map((u, i) => (i === index ? { ...u, analysis } : u))
+            );
+          }
+        } catch (error) {
+          console.error("Failed to fetch analysis:", error);
+           setLocalMutuals(prev =>
+              prev.map((u, i) => (i === index ? { ...u, analysis: "Não foi possível analisar essa conexão. Tente mais tarde." } : u))
+            );
+        }
+      }
+    };
+
+    // Fetch for current and pre-fetch for next
+    fetchAnalysis(currentIndex);
+    fetchAnalysis((currentIndex + 1) % localMutuals.length);
+
+  }, [currentIndex, localMutuals]);
+
 
   const handleControlClick = (direction: 'next' | 'prev') => {
+    if (isThrottled) return;
+
     setIsFading(true);
+    setIsThrottled(true);
+
     setTimeout(() => {
       if (direction === 'next') {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % mutuals.length);
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % localMutuals.length);
       } else {
-        setCurrentIndex((prevIndex) => (prevIndex - 1 + mutuals.length) % mutuals.length);
+        setCurrentIndex((prevIndex) => (prevIndex - 1 + localMutuals.length) % localMutuals.length);
       }
       setIsFading(false);
-    }, 300); // Shorter fade for snappier controls
+    }, 300);
+    
+    setTimeout(() => setIsThrottled(false), 1000); // 1-second throttle
   };
   
-  const currentUser = mutuals[currentIndex];
+  const currentUser = localMutuals[currentIndex];
 
   return (
     <div className="w-full flex flex-col items-center">
       <div className="relative w-full max-w-sm aspect-square mb-6">
-        {mutuals.map((user, index) => (
+        {localMutuals.map((user, index) => (
           <img
             key={user.id}
             src={user.profileImageUrl.replace('_normal', '_400x400')}
@@ -48,24 +94,28 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
         <h2 className="text-3xl font-bold">{currentUser.name}</h2>
         <p className="text-gray-400 text-lg mb-4">@{currentUser.username}</p>
         
-        {currentUser.analysis && (
-           <blockquote className="mt-2 p-3 bg-gray-800/50 border-l-4 border-purple-400 text-gray-300 italic rounded-r-lg min-h-[60px] flex items-center justify-center">
-             <p>"{currentUser.analysis}"</p>
-           </blockquote>
-        )}
+        <blockquote className="mt-2 p-3 bg-gray-800/50 border-l-4 border-purple-400 text-gray-300 italic rounded-r-lg min-h-[60px] flex items-center justify-center">
+            {currentUser.analysis ? (
+                 <p>"{currentUser.analysis}"</p>
+            ) : (
+                <p className="text-sm animate-pulse">Analisando a vibe... 😏</p>
+            )}
+        </blockquote>
       </div>
 
       <div className="flex items-center space-x-6 mt-8">
          <button
           onClick={() => handleControlClick('prev')}
-          className="w-16 h-16 bg-gray-800 text-white rounded-full flex items-center justify-center shadow-lg transform transition-all hover:scale-110 hover:bg-gray-700 focus:outline-none"
+          disabled={isThrottled}
+          className="w-16 h-16 bg-gray-800 text-white rounded-full flex items-center justify-center shadow-lg transform transition-all hover:scale-110 hover:bg-gray-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
           aria-label="Previous"
         >
           <ArrowLeftIcon className="w-8 h-8" />
         </button>
         <button
           onClick={() => handleControlClick('next')}
-          className="w-20 h-20 bg-white text-black rounded-full flex items-center justify-center shadow-lg transform transition-all hover:scale-110 focus:outline-none"
+          disabled={isThrottled}
+          className="w-20 h-20 bg-white text-black rounded-full flex items-center justify-center shadow-lg transform transition-all hover:scale-110 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
           aria-label="Next"
         >
           <ArrowRightIcon className="w-10 h-10" />

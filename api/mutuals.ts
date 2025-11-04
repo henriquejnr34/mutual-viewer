@@ -1,8 +1,6 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getSessionCookie } from '../lib/session.js';
-import { User } from '../types.js';
-import { GoogleGenAI } from '@google/genai';
 
 type Tweet = {
     id: string;
@@ -30,7 +28,10 @@ type TweetsApiResponse = {
 };
 
 interface InteractionInfo {
-    user: User;
+    id: string;
+    name: string;
+    username: string;
+    profileImageUrl: string;
     score: number;
     tweets: string[];
 }
@@ -61,13 +62,10 @@ const processInteractions = (
                 existing.tweets.push(tweet.text);
             } else {
                 scores.set(authorId, {
-                    user: {
-                        id: author.id,
-                        name: author.name,
-                        username: author.username,
-                        profileImageUrl: author.profile_image_url,
-                        analysis: '', // Will be filled by AI
-                    },
+                    id: author.id,
+                    name: author.name,
+                    username: author.username,
+                    profileImageUrl: author.profile_image_url,
                     score: weight,
                     tweets: [tweet.text],
                 });
@@ -76,34 +74,16 @@ const processInteractions = (
     }
 };
 
-async function getSapecaAnalysis(ai: GoogleGenAI, loggedInUser: string, targetUser: string, tweets: string[]): Promise<string> {
-    const tweetContext = tweets.slice(0, 5).map(t => `- "${t.replace(/\n/g, ' ')}"`).join('\n');
-    const prompt = `Você é um cupido digital com um senso de humor picante e divertido. O usuário ${loggedInUser} interagiu com ${targetUser}. Baseado nos seguintes tweets, que são uma mistura de curtidas e menções, escreva uma frase curta, engraçada e levemente atrevida (máximo 25 palavras) explicando por que a 'vibe' deles combina e por que 'com mutual é mais gostoso'. Mantenha o bom humor e use um emoji divertido (como 😉, 😏, ou 🔥). Não use aspas na resposta. Tweets de contexto:\n${tweetContext}`;
-
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-        });
-        return response.text.trim();
-    } catch (e) {
-        console.error(`Gemini API error for ${targetUser}:`, e);
-        return "Essa conexão é tão quente que até a IA ficou sem palavras. 🔥"; // Fallback response
-    }
-}
-
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const session = getSessionCookie(req);
     if (!session) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
-     if (!process.env.GEMINI_API_KEY) {
-        return res.status(500).json({ error: 'A chave da API do Google (GEMINI_API_KEY) não está configurada no servidor.' });
-    }
+    
+    // AI is no longer called here, so GEMINI_API_KEY check is removed from this endpoint.
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const { accessToken, user: { id: userId, username: loggedInUsername } } = session;
+    const { accessToken, user: { id: userId } } = session;
 
     try {
         const userFields = 'user.fields=profile_image_url';
@@ -134,20 +114,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const sortedInteractions = Array.from(interactionScores.values())
             .sort((a, b) => b.score - a.score)
-            .slice(0, 15); // Limit to top 15 to avoid too many API calls
+            .slice(0, 15)
+            .map(({ score, ...rest }) => rest); // Remove score from final payload
 
-        // Generate AI analysis for each top interaction in parallel
-        const usersWithAnalysis = await Promise.all(
-            sortedInteractions.map(async (interaction) => {
-                const analysis = await getSapecaAnalysis(ai, `@${loggedInUsername}`, `@${interaction.user.username}`, interaction.tweets);
-                return {
-                    ...interaction.user,
-                    analysis: analysis,
-                };
-            })
-        );
-        
-        res.status(200).json(usersWithAnalysis);
+        res.status(200).json(sortedInteractions);
 
     } catch (error: any) {
         console.error('Failed to fetch interactions:', error);
