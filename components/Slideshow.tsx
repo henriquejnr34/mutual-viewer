@@ -15,7 +15,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
   const [localMutuals, setLocalMutuals] = useState<User[]>(mutuals);
   const [isThrottled, setIsThrottled] = useState(false);
 
-  // Fetch analysis for current slide and pre-fetch for the next one
+  // Fetch analysis for current slide only
   useEffect(() => {
     const fetchAnalysis = async (index: number) => {
       if (index < 0 || index >= localMutuals.length) return;
@@ -48,7 +48,6 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
     };
 
     fetchAnalysis(currentIndex);
-    fetchAnalysis(currentIndex + 1); // Pre-fetch next user
 
   }, [currentIndex, localMutuals]);
 
@@ -69,7 +68,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
     }, 300);
     
     // Reset throttle after animation + buffer
-    setTimeout(() => setIsThrottled(false), 500); 
+    setTimeout(() => setIsThrottled(false), 1500); 
   };
   
   const currentUser = localMutuals[currentIndex];

@@ -95,7 +95,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         const userFields = 'user.fields=profile_image_url';
         const expansions = 'expansions=author_id';
-        const maxResults = 'max_results=100';
+        const maxResults = 'max_results=50';
 
         const likedTweetsUrl = `https://api.twitter.com/2/users/${userId}/liked_tweets?${maxResults}&${expansions}&${userFields}`;
         const mentionsUrl = `https://api.twitter.com/2/users/${userId}/mentions?${maxResults}&${expansions}&${userFields}`;
