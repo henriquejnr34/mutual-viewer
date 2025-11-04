@@ -98,11 +98,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!session) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
-     if (!process.env.API_KEY) {
-        return res.status(500).json({ error: 'A chave da API do Google não está configurada no servidor.' });
+     if (!process.env.GEMINI_API_KEY) {
+        return res.status(500).json({ error: 'A chave da API do Google (GEMINI_API_KEY) não está configurada no servidor.' });
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const { accessToken, user: { id: userId, username: loggedInUsername } } = session;
 
     try {
