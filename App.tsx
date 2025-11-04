@@ -46,19 +46,26 @@ const App: React.FC = () => {
     setError(null);
     setDiagnosis(null);
     try {
-      const res = await fetch('/api/mutuals');
+      const res = await fetch('/api/next-interaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seenUserIds: [] }),
+      });
+
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to fetch interactions.');
+        throw new Error(errorData.error || 'Failed to fetch first interaction.');
       }
       
-      const fetchedInteractions: User[] = await res.json();
-      if (fetchedInteractions.length === 0) {
+      const { mutual } = await res.json();
+
+      if (!mutual) {
         setError(`Não encontramos nenhuma interação recente para @${user.username}. Curta uns tweets ou interaja com a galera e tente de novo!`);
         setAppState('error');
         return;
       }
-      setMutuals(fetchedInteractions);
+
+      setMutuals([mutual]);
       setAppState('slideshow');
     } catch (e: any) {
       let errorMessage = e.message || 'An unexpected error occurred. Please try again later.';
@@ -106,7 +113,7 @@ const App: React.FC = () => {
       case 'loggedIn':
         return user ? <Dashboard user={user} onFindInteractions={handleFindInteractions} /> : <LoadingSpinner />;
       case 'fetchingInteractions':
-         return <LoadingSpinner text={`Analisando suas interações e gerando conexões sapecas... 😏`} />;
+         return <LoadingSpinner text={`Buscando sua primeira conexão sapeca... 😏`} />;
       case 'slideshow':
         return <Slideshow mutuals={mutuals} onReset={handleLogout} />;
       case 'error':

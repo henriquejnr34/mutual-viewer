@@ -1,11 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { User } from '../types';
 import { ArrowLeftIcon } from './icons/ArrowLeftIcon';
 import { ArrowRightIcon } from './icons/ArrowRightIcon';
 
 interface SlideshowProps {
-  mutuals: User[];
+  mutuals: User[]; // This will start with one user
   onReset: () => void;
 }
 
@@ -13,65 +13,87 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
   const [localMutuals, setLocalMutuals] = useState<User[]>(mutuals);
-  const [isThrottled, setIsThrottled] = useState(false);
+  
+  const [isFetchingNext, setIsFetchingNext] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch analysis for current slide only
-  useEffect(() => {
-    const fetchAnalysis = async (index: number) => {
-      if (index < 0 || index >= localMutuals.length) return;
-
-      const user = localMutuals[index];
-      // Only fetch if analysis doesn't exist
-      if (!user.analysis) {
-        try {
-          const res = await fetch('/api/analyze', {
+  const fetchNextMutual = async () => {
+    if (isFetchingNext) return;
+    setIsFetchingNext(true);
+    setError(null);
+    try {
+        const seenUserIds = localMutuals.map(u => u.id);
+        const res = await fetch('/api/next-interaction', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              targetUsername: user.username,
-              tweets: user.tweets,
-            }),
-          });
-          if (res.ok) {
-            const { analysis } = await res.json();
-            setLocalMutuals(prev =>
-              prev.map((u, i) => (i === index ? { ...u, analysis } : u))
-            );
-          }
-        } catch (error) {
-          console.error("Failed to fetch analysis:", error);
-           setLocalMutuals(prev =>
-              prev.map((u, i) => (i === index ? { ...u, analysis: "Não foi possível analisar essa conexão. Tente mais tarde." } : u))
-            );
+            body: JSON.stringify({ seenUserIds }),
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || 'Failed to fetch next interaction.');
         }
-      }
-    };
 
-    fetchAnalysis(currentIndex);
+        const { mutual } = await res.json();
 
-  }, [currentIndex, localMutuals]);
+        setIsFading(true);
+        setTimeout(() => {
+            if (mutual) {
+                setLocalMutuals(prev => [...prev, mutual]);
+                setCurrentIndex(prev => prev + 1);
+            } else {
+                setHasMore(false); // No more users found
+            }
+            setIsFading(false);
+        }, 300);
 
+    } catch (e: any) {
+        setError("Não foi possível buscar a próxima conexão. Tente novamente mais tarde.");
+    } finally {
+        // A small delay to let the fade-in animation complete if a user was found
+        setTimeout(() => setIsFetchingNext(false), 500);
+    }
+  };
 
   const handleControlClick = (direction: 'next' | 'prev') => {
-    if (isThrottled) return;
+    if (isFading || isFetchingNext) return;
+
+    if (direction === 'next') {
+        if (currentIndex === localMutuals.length - 1) {
+            if (hasMore) {
+                fetchNextMutual();
+            }
+            return;
+        }
+    }
 
     setIsFading(true);
-    setIsThrottled(true);
-
+    
     setTimeout(() => {
       if (direction === 'next') {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % localMutuals.length);
+        setCurrentIndex((prevIndex) => Math.min(prevIndex + 1, localMutuals.length - 1));
       } else {
-        setCurrentIndex((prevIndex) => (prevIndex - 1 + localMutuals.length) % localMutuals.length);
+        setCurrentIndex((prevIndex) => Math.max(prevIndex - 1, 0));
       }
       setIsFading(false);
     }, 300);
-    
-    // Reset throttle after animation + buffer
-    setTimeout(() => setIsThrottled(false), 1500); 
   };
   
   const currentUser = localMutuals[currentIndex];
+  
+  if (!currentUser) {
+      return (
+        <div className="text-center">
+            <p className="text-gray-400">Nenhuma interação encontrada.</p>
+            <button onClick={onReset} className="mt-4 text-blue-400 hover:text-blue-300">Voltar</button>
+        </div>
+      );
+  }
+
+  const isAtEnd = currentIndex === localMutuals.length - 1;
+  const canShowNext = hasMore || !isAtEnd;
+  const canShowPrev = currentIndex > 0;
 
   return (
     <div className="w-full flex flex-col items-center">
@@ -94,36 +116,50 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
         <p className="text-gray-400 text-lg mb-4">@{currentUser.username}</p>
         
         <blockquote className="mt-2 p-3 bg-gray-800/50 border-l-4 border-purple-400 text-gray-300 italic rounded-r-lg min-h-[60px] flex items-center justify-center">
-            {currentUser.analysis ? (
-                 <p>"{currentUser.analysis}"</p>
-            ) : (
-                <p className="text-sm animate-pulse">Analisando a vibe... 😏</p>
-            )}
+             <p>"{currentUser.analysis}"</p>
         </blockquote>
       </div>
 
-      <div className="flex items-center space-x-6 mt-8">
+      <div className="flex items-center justify-center space-x-6 mt-8 h-20 w-full">
          <button
           onClick={() => handleControlClick('prev')}
-          disabled={isThrottled}
+          disabled={!canShowPrev || isFading || isFetchingNext}
           className="w-16 h-16 bg-gray-800 text-white rounded-full flex items-center justify-center shadow-lg transform transition-all hover:scale-110 hover:bg-gray-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
           aria-label="Previous"
         >
           <ArrowLeftIcon className="w-8 h-8" />
         </button>
-        <button
-          onClick={() => handleControlClick('next')}
-          disabled={isThrottled}
-          className="w-20 h-20 bg-white text-black rounded-full flex items-center justify-center shadow-lg transform transition-all hover:scale-110 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
-          aria-label="Next"
-        >
-          <ArrowRightIcon className="w-10 h-10" />
-        </button>
+
+        <div className="w-20 h-20 flex items-center justify-center">
+            { isFetchingNext ? (
+                <div className="w-10 h-10 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : canShowNext ? (
+                <button
+                onClick={() => handleControlClick('next')}
+                disabled={isFading}
+                className="w-20 h-20 bg-white text-black rounded-full flex items-center justify-center shadow-lg transform transition-all hover:scale-110 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+                aria-label="Next"
+                >
+                <ArrowRightIcon className="w-10 h-10" />
+                </button>
+            ) : (
+                <div className="w-20 h-20 flex items-center justify-center rounded-full bg-gray-800">
+                    <p className="text-sm font-bold text-gray-400">FIM</p>
+                </div>
+            )}
+        </div>
+      </div>
+      
+      <div className="h-10 mt-4 text-center">
+        {error && <p className="text-red-400 text-sm">{error}</p>}
+        {!hasMore && isAtEnd && (
+            <p className="text-gray-400 animate-pulse">Você viu tudo por hoje! Interaja mais e volte depois. 🎉</p>
+        )}
       </div>
       
       <button
         onClick={onReset}
-        className="mt-12 text-gray-400 hover:text-white transition-colors"
+        className="mt-8 text-gray-400 hover:text-white transition-colors"
       >
         Recomeçar a brincadeira 😏
       </button>

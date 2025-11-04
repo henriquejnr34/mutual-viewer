@@ -4,8 +4,7 @@ export interface User {
   name: string;
   username: string;
   profileImageUrl: string;
-  analysis?: string; // Analysis is now optional as it will be fetched on demand
-  tweets?: string[]; // Tweets context to be sent for analysis
+  analysis: string; // Analysis is now required, fetched with the user
 }
 
 export interface AuthenticatedUser {
