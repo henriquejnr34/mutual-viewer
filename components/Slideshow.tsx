@@ -47,9 +47,8 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
       }
     };
 
-    // Fetch for current and pre-fetch for next
+    // Fetch analysis ONLY for the currently displayed user.
     fetchAnalysis(currentIndex);
-    fetchAnalysis((currentIndex + 1) % localMutuals.length);
 
   }, [currentIndex, localMutuals]);
 
@@ -69,7 +68,8 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
       setIsFading(false);
     }, 300);
     
-    setTimeout(() => setIsThrottled(false), 1000); // 1-second throttle
+    // Increased throttle to 1.5 seconds to prevent too many requests
+    setTimeout(() => setIsThrottled(false), 1500); 
   };
   
   const currentUser = localMutuals[currentIndex];

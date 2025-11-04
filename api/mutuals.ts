@@ -9,7 +9,7 @@ type Tweet = {
 };
 
 type UserFromApi = {
-    id: string;
+    id:string;
     name: string;
     username: string;
     profile_image_url: string;
@@ -35,6 +35,15 @@ interface InteractionInfo {
     score: number;
     tweets: string[];
 }
+
+// Helper to shuffle an array for random sampling
+const shuffleArray = <T>(array: T[]): T[] => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};
 
 // Helper to process interactions and store relevant tweet text
 const processInteractions = (
@@ -81,8 +90,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
     
-    // AI is no longer called here, so GEMINI_API_KEY check is removed from this endpoint.
-
     const { accessToken, user: { id: userId } } = session;
 
     try {
@@ -115,7 +122,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const sortedInteractions = Array.from(interactionScores.values())
             .sort((a, b) => b.score - a.score)
             .slice(0, 15)
-            .map(({ score, ...rest }) => rest); // Remove score from final payload
+            .map(({ score, tweets, ...rest }) => ({
+                ...rest,
+                // Shuffle and take a random sample of up to 10 tweets
+                tweets: shuffleArray(tweets).slice(0, 10),
+            }));
 
         res.status(200).json(sortedInteractions);
 
