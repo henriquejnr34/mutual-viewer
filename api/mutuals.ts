@@ -78,7 +78,7 @@ const processInteractions = (
 
 async function getSapecaAnalysis(ai: GoogleGenAI, loggedInUser: string, targetUser: string, tweets: string[]): Promise<string> {
     const tweetContext = tweets.slice(0, 5).map(t => `- "${t.replace(/\n/g, ' ')}"`).join('\n');
-    const prompt = `Você é um cupido digital com um senso de humor picante e divertido. O usuário ${loggedInUser} interagiu com ${targetUser}. Baseado nos seguintes tweets, que são uma mistura de curtidas e menções, escreva uma frase curta, engraçada e levemente atrevida (máximo 25 palavras) explicando por que a 'vibe' deles combina e por que 'com mutual é mais gostoso'. Mantenha o bom humor. Não use aspas na resposta. Tweets de contexto:\n${tweetContext}`;
+    const prompt = `Você é um cupido digital com um senso de humor picante e divertido. O usuário ${loggedInUser} interagiu com ${targetUser}. Baseado nos seguintes tweets, que são uma mistura de curtidas e menções, escreva uma frase curta, engraçada e levemente atrevida (máximo 25 palavras) explicando por que a 'vibe' deles combina e por que 'com mutual é mais gostoso'. Mantenha o bom humor e use um emoji divertido (como 😉, 😏, ou 🔥). Não use aspas na resposta. Tweets de contexto:\n${tweetContext}`;
 
     try {
         const response = await ai.models.generateContent({
@@ -88,7 +88,7 @@ async function getSapecaAnalysis(ai: GoogleGenAI, loggedInUser: string, targetUs
         return response.text.trim();
     } catch (e) {
         console.error(`Gemini API error for ${targetUser}:`, e);
-        return "Essa conexão é tão quente que até a IA ficou sem palavras."; // Fallback response
+        return "Essa conexão é tão quente que até a IA ficou sem palavras. 🔥"; // Fallback response
     }
 }
 

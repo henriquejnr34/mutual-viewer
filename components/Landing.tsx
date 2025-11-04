@@ -12,7 +12,7 @@ const Landing: React.FC = () => {
         Com Mutual é Mais Gostoso
       </h1>
       <p className="text-lg text-gray-400 max-w-md mb-8">
-        Conecte sua conta do X e deixe nossa IA sapeca analisar com quem você mais interage... e por que essa conexão pode ser deliciosa.
+        Conecte sua conta do X e deixe nossa IA sapeca analisar suas interações... e descobrir por que essa conexão é tão gostosa. 🤤
       </p>
       <a
         href="/api/login"

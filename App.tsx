@@ -106,7 +106,7 @@ const App: React.FC = () => {
       case 'loggedIn':
         return user ? <Dashboard user={user} onFindInteractions={handleFindInteractions} /> : <LoadingSpinner />;
       case 'fetchingInteractions':
-         return <LoadingSpinner text={`Analisando suas interações e gerando conexões sapecas...`} />;
+         return <LoadingSpinner text={`Analisando suas interações e gerando conexões sapecas... 😏`} />;
       case 'slideshow':
         return <Slideshow mutuals={mutuals} onReset={handleLogout} />;
       case 'error':

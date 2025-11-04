@@ -19,7 +19,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onFindInteractions }) => {
         </div>
       </div>
       <p className="text-lg text-gray-400 max-w-md mb-8">
-        Você está conectado! Vamos analisar suas curtidas e menções recentes para revelar suas conexões mais... quentes.
+        Você está conectado! 🔥 Vamos analisar suas curtidas e menções recentes para revelar suas conexões mais... quentes. 😉
       </p>
       <button
         onClick={onFindInteractions}

@@ -1,45 +1,32 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { User } from '../types';
-import { PlayIcon } from './icons/PlayIcon';
-import { PauseIcon } from './icons/PauseIcon';
+import { ArrowLeftIcon } from './icons/ArrowLeftIcon';
+import { ArrowRightIcon } from './icons/ArrowRightIcon';
+
 
 interface SlideshowProps {
   mutuals: User[];
   onReset: () => void;
 }
 
-const SLIDESHOW_SPEED_MS = 3500; // Increased speed to allow time to read analysis
-
 const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const [isFading, setIsFading] = useState(false);
-  const intervalRef = useRef<number | null>(null);
+
+  const handleControlClick = (direction: 'next' | 'prev') => {
+    setIsFading(true);
+    setTimeout(() => {
+      if (direction === 'next') {
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % mutuals.length);
+      } else {
+        setCurrentIndex((prevIndex) => (prevIndex - 1 + mutuals.length) % mutuals.length);
+      }
+      setIsFading(false);
+    }, 300); // Shorter fade for snappier controls
+  };
   
   const currentUser = mutuals[currentIndex];
-
-  useEffect(() => {
-    if (!isPaused) {
-      intervalRef.current = window.setInterval(() => {
-        setIsFading(true);
-        setTimeout(() => {
-          setCurrentIndex((prevIndex) => (prevIndex + 1) % mutuals.length);
-          setIsFading(false);
-        }, 500); // Fade duration
-      }, SLIDESHOW_SPEED_MS);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [isPaused, mutuals.length]);
 
   return (
     <div className="w-full flex flex-col items-center">
@@ -49,7 +36,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
             key={user.id}
             src={user.profileImageUrl.replace('_normal', '_400x400')}
             alt={user.name}
-            className={`absolute top-0 left-0 w-full h-full rounded-2xl object-cover transition-opacity duration-500 ease-in-out ${
+            className={`absolute top-0 left-0 w-full h-full rounded-2xl object-cover transition-opacity duration-300 ease-in-out ${
               index === currentIndex && !isFading ? 'opacity-100' : 'opacity-0'
             }`}
           />
@@ -57,24 +44,31 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
         <div className="absolute inset-0 bg-black bg-opacity-30 rounded-2xl pointer-events-none"></div>
       </div>
 
-      <div className={`text-center transition-opacity duration-500 w-full max-w-md ${isFading ? 'opacity-0' : 'opacity-100'}`}>
+      <div className={`text-center transition-opacity duration-300 w-full max-w-md ${isFading ? 'opacity-0' : 'opacity-100'}`}>
         <h2 className="text-3xl font-bold">{currentUser.name}</h2>
         <p className="text-gray-400 text-lg mb-4">@{currentUser.username}</p>
         
         {currentUser.analysis && (
-           <blockquote className="mt-2 p-3 bg-gray-800/50 border-l-4 border-purple-400 text-gray-300 italic rounded-r-lg">
-             "{currentUser.analysis}"
+           <blockquote className="mt-2 p-3 bg-gray-800/50 border-l-4 border-purple-400 text-gray-300 italic rounded-r-lg min-h-[60px] flex items-center justify-center">
+             <p>"{currentUser.analysis}"</p>
            </blockquote>
         )}
       </div>
 
-      <div className="flex items-center space-x-4 mt-8">
-        <button
-          onClick={() => setIsPaused(!isPaused)}
-          className="w-16 h-16 bg-white text-black rounded-full flex items-center justify-center shadow-lg transform transition-transform hover:scale-110 focus:outline-none"
-          aria-label={isPaused ? 'Play' : 'Pause'}
+      <div className="flex items-center space-x-6 mt-8">
+         <button
+          onClick={() => handleControlClick('prev')}
+          className="w-16 h-16 bg-gray-800 text-white rounded-full flex items-center justify-center shadow-lg transform transition-all hover:scale-110 hover:bg-gray-700 focus:outline-none"
+          aria-label="Previous"
         >
-          {isPaused ? <PlayIcon className="w-8 h-8" /> : <PauseIcon className="w-8 h-8" />}
+          <ArrowLeftIcon className="w-8 h-8" />
+        </button>
+        <button
+          onClick={() => handleControlClick('next')}
+          className="w-20 h-20 bg-white text-black rounded-full flex items-center justify-center shadow-lg transform transition-all hover:scale-110 focus:outline-none"
+          aria-label="Next"
+        >
+          <ArrowRightIcon className="w-10 h-10" />
         </button>
       </div>
       
@@ -82,7 +76,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ mutuals, onReset }) => {
         onClick={onReset}
         className="mt-12 text-gray-400 hover:text-white transition-colors"
       >
-        Logout & Começar de Novo
+        Recomeçar a brincadeira 😏
       </button>
     </div>
   );
