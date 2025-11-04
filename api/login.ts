@@ -35,14 +35,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       path: '/',
       maxAge: 300, // 5 minutes
       secure: isProduction,
-      sameSite: 'lax',
+      sameSite: isProduction ? 'none' : 'lax',
     }),
     serialize(CODE_VERIFIER_COOKIE_NAME, codeVerifier, {
       httpOnly: true,
       path: '/',
       maxAge: 300, // 5 minutes
       secure: isProduction,
-      sameSite: 'lax',
+      sameSite: isProduction ? 'none' : 'lax',
     }),
   ]);
 

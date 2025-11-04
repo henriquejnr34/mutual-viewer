@@ -75,14 +75,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     };
     
+    const isProduction = process.env.NODE_ENV === 'production';
+
     // Create session cookie and clear temporary cookies in one go
     const sessionCookie = serialize(SESSION_COOKIE_NAME, JSON.stringify(session), {
       maxAge: SESSION_MAX_AGE,
       expires: new Date(Date.now() + SESSION_MAX_AGE * 1000),
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isProduction,
       path: '/',
-      sameSite: 'lax',
+      sameSite: isProduction ? 'none' : 'lax',
     });
     const clearStateCookie = serialize(STATE_COOKIE_NAME, '', { maxAge: -1, path: '/' });
     const clearVerifierCookie = serialize(CODE_VERIFIER_COOKIE_NAME, '', { maxAge: -1, path: '/' });
